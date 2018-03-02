@@ -11,7 +11,7 @@ import SamplingRateConversion
 import sys
 
 N = 256         # スペクトログラム生成時の窓幅
-OVERLAP = 64    # スペクトログラム生成時の移動窓幅
+OVERLAP = 0    # スペクトログラム生成時の移動窓幅
 
 def plot(data,fs):
     """
