@@ -6,28 +6,30 @@
 
 また，Wavファイルのスペクトログラムを表示するプログラムも入っています．
 
-サンプルとして，基本周波数1000Hzの矩形波（test.wav）とその結果（up.wav,down.wav）が入っています．
+サンプルとして，基本周波数1000Hzの矩形波（test.wav）とその結果（test_up.wav, test_down.wav）が入っています．
 
 コード内に問題がある可能性があるので，もしお気づきになられたら修正 or 連絡をお願い致します．
 
 # Usage
-wavディレクトリ内に変換したいwavファイルを置いておく．
+- 環境構築
+  ```
+  $pip install -r requirements.txt
+  ```
+- サンプリング周波数変換実行
+  ```
+  $python sr_converter.py {input file path} {output dir path} --up {up sampling conversion} --down {down conversion rate}
 
-SamplingRateConversion.py内のFILENAMEを変換したいファイルのパスに置き換える．
+  # 例
+  $python sr_converter.py ./wav/test.wav ./wav --up 4 --down 4
+  ```
+- 可視化
+  ```
+  $python visualizer.py {input wav file path} -o {output file path} -N {FFT window}
 
-「python SamplingRateConversion.py」を実行すると，wavディレクトリ内に結果が出力される．
-
-PlotSpectrogram.pyの使い方は，プログラム内に記載しています．
-
-# Requirement
-Python 3.6.0
-
-numpy 1.14.1
-
-scipy 1.0.0
-
-matplotlib 2.1.2
+  # 例
+  $python visuazlier.py ./wav/test_up.wav -o ./result_png/up.png -N 512
+  ```
 
 
 # License
-Copyright © 2016 T_Sumida Distributed under the MIT License.
+Copyright © 2020 T_Sumida Distributed under the MIT License.
