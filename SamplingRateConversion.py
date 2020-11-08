@@ -1,34 +1,66 @@
 # -*- coding:utf-8 -*-
+import os
+import wave
+import struct
+import argparse
+from typing import Tuple
+
 import numpy as np
 import scipy.signal
-import wave
-import array
-import struct
 
-FILENAME = "./wav/test.wav"
 
-def readWav(filename):
+def get_args() -> argparse.Namespace:
+    """引数取得
+
+    Returns:
+        argparse.Namespace: 引数情報
     """
-    wavファイルを読み込んで，データ・サンプリングレートを返す関数
+    parser = argparse.ArgumentParser(
+        prog="SamplingRateConversion.py", usage="convert samplingrate",
+        add_help=True
+    )
+    parser.add_argument("input", type=str, help="input wav file path")
+    parser.add_argument("output_dir", type=str, help="output dir path")
+    parser.add_argument(
+        "--up", type=int, default=None, help="up conversion rate: int"
+    )
+    parser.add_argument(
+        "--down", type=int, default=None, help="down conversion rate: int"
+    )
+    return parser.parse_args()
+
+
+def readWav(filename: str) -> Tuple[np.array, int]:
+    """wavファイルを読み込んで，データ・サンプリングレートを返す関数
+
+    Args:
+        filename (str): wavファイルパス
+
+    Returns:
+        Tuple[np.array, int]: (信号データ, サンプリングレート)
     """
     try:
         wf = wave.open(filename)
         fs = wf.getframerate()
         # -1 ~ 1までに正規化した信号データを読み込む
-        data = np.frombuffer(wf.readframes(wf.getnframes()),dtype="int16")/32768.0
-        return (data,fs)
+        data = np.frombuffer(wf.readframes(wf.getnframes()), dtype="int16") / 32768.0
+        return (data, fs)
     except Exception as e:
         print(e)
         exit()
 
 
-def writeWav(filename,data,fs):
-    """
-    入力されたファイル名でwavファイルを書き出す．
+def writeWav(filename: str, data: np.array, fs: int):
+    """入力されたファイル名でwavファイルを書き出す．
+
+    Args:
+        filename (str): 出力ファイルパス
+        data (np.array): 信号データ
+        fs (int): サンプリングレート
     """
     # データを-32768から32767の整数値に変換
     data = [int(x * 32767.0) for x in data]
-    #バイナリ化
+    # バイナリ化
     binwave = struct.pack("h" * len(data), *data)
     wf = wave.Wave_write(filename)
     wf.setparams((
@@ -42,15 +74,21 @@ def writeWav(filename,data,fs):
     wf.close()
 
 
+def upsampling(conversion_rate: int, data: np.array, fs: int) -> Tuple[np.array, int]:
+    """アップサンプリングを行う．
+       入力として，変換レートとデータとサンプリング周波数．
+       アップサンプリング後のデータとサンプリング周波数を返す．
 
-def upsampling(conversion_rate,data,fs):
-    """
-    アップサンプリングを行う．
-    入力として，変換レートとデータとサンプリング周波数．
-    アップサンプリング後のデータとサンプリング周波数を返す．
+    Args:
+        conversion_rate (int): 変換レート
+        data (np.array): 信号データ
+        fs (int): サンプリングレート
+
+    Returns:
+        Tuple[np.array, int]: 変換後の信号データとサンプリングレート
     """
     # 補間するサンプル数を決める
-    interpolationSampleNum = conversion_rate-1
+    interpolation_sample_num = conversion_rate-1
 
     # FIRフィルタの用意をする
     nyqF = (fs*conversion_rate)/2.0     # 変換後のナイキスト周波数
@@ -59,26 +97,33 @@ def upsampling(conversion_rate,data,fs):
     b = scipy.signal.firwin(taps, cF)   # LPFを用意
 
     # 補間処理
-    upData = []
+    up_data = []
     for d in data:
-        upData.append(d)
-        # 1サンプルの後に，interpolationSampleNum分だけ0を追加する
-        for i in range(interpolationSampleNum):
-            upData.append(0.0)
+        up_data.append(d)
+        # 1サンプルの後に，interpolation_sample_num分だけ0を追加する
+        for i in range(interpolation_sample_num):
+            up_data.append(0.0)
 
     # フィルタリング
-    resultData = scipy.signal.lfilter(b,1,upData)
-    return (resultData,fs*conversion_rate)
+    result_data = scipy.signal.lfilter(b, 1, up_data)
+    return (result_data, int(fs*conversion_rate))
 
 
-def downsampling(conversion_rate,data,fs):
-    """
-    ダウンサンプリングを行う．
+def downsampling(conversion_rate: int, data: np.array, fs: int) -> Tuple[np.array, int]:
+    """ダウンサンプリングを行う．
     入力として，変換レートとデータとサンプリング周波数．
     アップサンプリング後のデータとサンプリング周波数を返す．
+
+    Args:
+        conversion_rate (int): 変換レート
+        data (np.array): 信号データ
+        fs (int): サンプリングレート
+
+    Returns:
+        Tuple[np.array, int]: 変換後の信号データとサンプリングレート
     """
     # 間引くサンプル数を決める
-    decimationSampleNum = conversion_rate-1
+    decimation_sampleNum = conversion_rate-1
 
     # FIRフィルタの用意をする
     nyqF = (fs/conversion_rate)/2.0             # 変換後のナイキスト周波数
@@ -86,29 +131,38 @@ def downsampling(conversion_rate,data,fs):
     taps = 511                                  # フィルタ係数（奇数じゃないとだめ）
     b = scipy.signal.firwin(taps, cF)           # LPFを用意
 
-    #フィルタリング
-    data = scipy.signal.lfilter(b,1,data)
+    # フィルタリング
+    data = scipy.signal.lfilter(b, 1, data)
 
-    #間引き処理
-    downData = []
-    for i in range(0,len(data),decimationSampleNum+1):
-        downData.append(data[i])
+    # 間引き処理
+    down_data = []
+    for i in range(0, len(data), decimation_sampleNum+1):
+        down_data.append(data[i])
 
-    return (downData,fs/conversion_rate)
-
+    return (down_data, int(fs/conversion_rate))
 
 
 if __name__ == "__main__":
-    # 何倍にするかを決めておく
-    up_conversion_rate = 4
-    # 何分の1にするか決めておく．ここではその逆数を指定しておく（例：1/2なら2と指定）
-    down_conversion_rate = 4
+    args = get_args()
 
     # テストwavファイルを読み込む
-    data,fs = readWav(FILENAME)
+    data, fs = readWav(args.input)
 
-    upData,upFs = upsampling(up_conversion_rate,data,fs)
-    downData,downFs = downsampling(down_conversion_rate,data,fs)
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
 
-    writeWav("./wav/up.wav",upData,upFs)
-    writeWav("./wav/down.wav",downData,downFs)
+    base_file_name = os.path.splitext(os.path.basename(args.input))[0]
+
+    if args.up is not None:
+        up_data, up_fs = upsampling(args.up, data, fs)
+        writeWav(
+            os.path.join(args.output_dir, base_file_name + "_up.wav"),
+            up_data, up_fs
+        )
+
+    if args.down is not None:
+        down_data, down_fs = downsampling(args.down, data, fs)
+        writeWav(
+            os.path.join(args.output_dir, base_file_name + "_down.wav"),
+            down_data, down_fs
+        )
