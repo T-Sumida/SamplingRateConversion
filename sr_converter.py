@@ -16,7 +16,7 @@ def get_args() -> argparse.Namespace:
         argparse.Namespace: 引数情報
     """
     parser = argparse.ArgumentParser(
-        prog="SamplingRateConversion.py", usage="convert samplingrate",
+        prog="sr_converter.py", usage="convert samplingrate",
         add_help=True
     )
     parser.add_argument("input", type=str, help="input wav file path")
@@ -30,7 +30,7 @@ def get_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def readWav(filename: str) -> Tuple[np.array, int]:
+def read_wav(filename: str) -> Tuple[np.array, int]:
     """wavファイルを読み込んで，データ・サンプリングレートを返す関数
 
     Args:
@@ -50,7 +50,7 @@ def readWav(filename: str) -> Tuple[np.array, int]:
         exit()
 
 
-def writeWav(filename: str, data: np.array, fs: int):
+def write_wav(filename: str, data: np.array, fs: int):
     """入力されたファイル名でwavファイルを書き出す．
 
     Args:
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     args = get_args()
 
     # テストwavファイルを読み込む
-    data, fs = readWav(args.input)
+    data, fs = read_wav(args.input)
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
@@ -155,14 +155,14 @@ if __name__ == "__main__":
 
     if args.up is not None:
         up_data, up_fs = upsampling(args.up, data, fs)
-        writeWav(
+        write_wav(
             os.path.join(args.output_dir, base_file_name + "_up.wav"),
             up_data, up_fs
         )
 
     if args.down is not None:
         down_data, down_fs = downsampling(args.down, data, fs)
-        writeWav(
+        write_wav(
             os.path.join(args.output_dir, base_file_name + "_down.wav"),
             down_data, down_fs
         )
