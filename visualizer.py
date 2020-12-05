@@ -23,7 +23,7 @@ def get_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def visualize(data: np.array, fs: int, output_path: str, n_fft: int):
+def visualize(data: np.array, fs: int, output_path: str, n_fft: int) -> None:
     """指定されたデータとサンプリング周波数でスペクトログラムを作成・表示する
     Args:
         data (np.array): 信号データ

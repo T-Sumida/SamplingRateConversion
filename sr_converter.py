@@ -50,7 +50,7 @@ def read_wav(filename: str) -> Tuple[np.array, int]:
         exit()
 
 
-def write_wav(filename: str, data: np.array, fs: int):
+def write_wav(filename: str, data: np.array, fs: int) -> None:
     """入力されたファイル名でwavファイルを書き出す．
 
     Args:
@@ -63,13 +63,14 @@ def write_wav(filename: str, data: np.array, fs: int):
     # バイナリ化
     binwave = struct.pack("h" * len(data), *data)
     wf = wave.Wave_write(filename)
-    wf.setparams((
-                    1,                          # channel
-                    2,                          # byte width
-                    fs,                         # sampling rate
-                    len(data),                  # number of frames
-                    "NONE", "not compressed"    # no compression
-                ))
+    params = (
+        1,                          # channel
+        2,                          # byte width
+        fs,                         # sampling rate
+        len(data),                  # number of frames
+        "NONE", "not compressed"    # no compression
+    )
+    wf.setparams(params)
     wf.writeframes(binwave)
     wf.close()
 
