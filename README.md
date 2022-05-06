@@ -10,8 +10,8 @@ QiiteにあるようなPythonスクリプトは[script](./script/)フォルダ�
 
 コード内に問題がある可能性があるので，もしお気づきになられたら修正 or 連絡をお願い致します．
 
-![gif](./images/app.gif)
-<!-- <img src="./images/app.gif" width="320px"> -->
+<!-- ![gif](./images/app.gif) -->
+<img src="./images/app.gif" width="600px">
 
 # Usage
 - 環境構築
